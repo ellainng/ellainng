@@ -1,5 +1,7 @@
 ## Hi there 👋
 
+<img width="1121" height="1403" alt="B5096860-A864-4ED5-8E50-EC5ADD75AD5D" src="https://github.com/user-attachments/assets/e0e5e859-e083-4a1c-bcd0-e3fb17823715" />
+
 <!--
 **ellainng/ellainng** is a ✨ _special_ ✨ repository because its `README.md` (this file) appears on your GitHub profile.
 
