@@ -1,0 +1,25 @@
+[project]
+name = "ellainng"
+version = "0.1.0"
+description = "A personal environment for discovering, running, and scheduling utilities."
+readme = "README.md"
+authors = [
+    { name = "ellainng", email = "299958882+ellainng@users.noreply.github.com" }
+]
+requires-python = ">=3.14"
+dependencies = [
+    "hidden-moves==0.1.0",
+    "expose-interface @ git+https://github.com/outside-labs/expose_interface.git@9a728756c02dd528bce5b685e55a89585923ef71",
+]
+
+[project.scripts]
+ellainng = "ellainng.cli:main"
+ella = "ellainng.cli:main"
+
+[project.urls]
+Source = "https://github.com/ellainng/ellainng/tree/main/ellainng"
+Issues = "https://github.com/ellainng/ellainng/issues"
+
+[build-system]
+requires = ["uv_build>=0.12.19,<0.13.0"]
+build-backend = "uv_build"

@@ -1,0 +1,44 @@
+version = 1
+revision = 3
+requires-python = ">=3.14"
+
+[[package]]
+name = "click"
+version = "8.5.0"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/c7/0e/7fa0ef50764b67090eca4114772a2abf8b6148198475e54c660b97caeee6/click-8.5.0.tar.gz", hash = "sha256:ba0d2089de75ea0310e2dde03160e6ca10009947fb95a182f9b54021bb272e34", size = 382235, upload-time = "2026-08-26T13:33:14.56Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/58/50/6c0d534c5f134586a8e1ba4e330569e32f057e33372ae556463212fb4cd3/click-8.5.0-py3-none-any.whl", hash = "sha256:255bc9599cf7748b4b1a446ccc735421bd08a2ae529a8b88597d3de5664ee360", size = 125251, upload-time = "2026-08-26T13:33:12.928Z" },
+]
+
+[[package]]
+name = "ellainng"
+version = "0.1.0"
+source = { editable = "." }
+dependencies = [
+    { name = "expose-interface" },
+    { name = "hidden-moves" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "expose-interface", git = "https://github.com/outside-labs/expose_interface.git?rev=9a728756c02dd528bce5b685e55a89585923ef71" },
+    { name = "hidden-moves", specifier = "==0.1.0" },
+]
+
+[[package]]
+name = "expose-interface"
+version = "0.1.0"
+source = { git = "https://github.com/outside-labs/expose_interface.git?rev=9a728756c02dd528bce5b685e55a89585923ef71#9a728756c02dd528bce5b685e55a89585923ef71" }
+
+[[package]]
+name = "hidden-moves"
+version = "0.1.0"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "click" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/2f/21/ca0ddcf5f46fb9ddefc3152e24a950d7c96b898b6c8fae6c1302767460d3/hidden_moves-0.1.0.tar.gz", hash = "sha256:a70442ca6c8a125c01b31fe9714249fdee674f0fdee78187a771bed437228c1e", size = 15438, upload-time = "2026-10-10T21:34:35.8Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/9b/ec/0655c1ca8f048af5aea9a0bc079cde04663809160a067463847fa444e3fe/hidden_moves-0.1.0-py3-none-any.whl", hash = "sha256:1be2c521926207f82c23bccc43bc7f1a8a912ded846c5483900d6ec14b19a645", size = 22984, upload-time = "2026-10-10T21:34:34.527Z" },
+]
