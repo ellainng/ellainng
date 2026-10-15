@@ -87,9 +87,9 @@ def validate_manifest(data: dict) -> None:
             if not preset:
                 raise UtilityError("Preset names must not be empty.")
             validate_arguments(arguments)
-    schedules = data.get("schedules", {})
-    if not isinstance(schedules, dict) or schedules:
-        raise UtilityError("schedules must be an empty table until scheduling is configured.")
+    from .scheduling import validate_schedules
+
+    validate_schedules(data.get("schedules", {}), entries)
 
 
 def _toml_value(value) -> str:

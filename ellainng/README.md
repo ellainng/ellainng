@@ -139,6 +139,66 @@ the first run. Listing, inspection, help, and empty history reads create no stat
 Storage must be writable before a utility starts. A completion-storage failure
 reports that an operation has already run and never retries the operation.
 
+## Scheduling
+
+Save a definition and review its export before installing it:
+
+```sh
+uv run ella schedule add daily-slug text.slugify --at 02:00 --arguments '{"value":"Hello World"}'
+uv run ella schedule add frequent-slug text.slugify --minutes 30 --arguments '{"value":"Hello World"}'
+uv run ella schedule list
+uv run ella schedule show daily-slug
+uv run ella schedule run daily-slug
+uv run ella schedule export daily-slug
+```
+
+Add `--preset NAME` to select a saved move preset. Definitions and exports are
+portable; native installation is currently available on macOS:
+
+```sh
+uv run ella schedule install daily-slug
+uv run ella schedule status daily-slug
+uv run ella schedule uninstall daily-slug
+uv run ella schedule remove daily-slug
+```
+
+Installation writes an application-owned plist in `~/Library/LaunchAgents` and
+bootstraps it in the current user's GUI session. Existing unrelated files and
+loaded labels are refused. Removal verifies the plist's command/configuration
+identity and the loaded job's origin before acting. An unrecognized launchctl
+diagnostic format also prevents removal. Schedule timing or interpreter changes
+require explicit uninstall/reinstall. Uninstall keeps the definition, history,
+and logs; remove deletes only an uninstalled definition. Referenced move/preset
+registrations must remain valid until their schedule is removed.
+
+The plist preserves the installed interpreter path, explicit config/state paths,
+and argument boundaries. It does not copy the interactive shell's environment or
+credentials. Use absolute executable/interpreter paths for background scripts;
+launchd's PATH, available credentials, and permissions may differ from a terminal.
+Moving the configuration or removing the installed environment breaks that job's
+command; uninstall before moving either.
+
+Before installation, preflight checks capability exposure and Python argument
+binding without executing the utility. Type validation is performed by the
+catalog on every actual run. Hidden Moves currently provides validation through
+invocation rather than a standalone public argument-validation method.
+
+Background execution uses the same presets, catalog, and SQLite history as
+interactive invocation. Private status logs live in the state directory's
+`schedules/` folder; ordinary Python stdout/stderr, returned values, and exception
+messages are suppressed by the background command. Utility code remains trusted
+code and can explicitly write its own output or files. Logs are retained until
+you remove them; automatic rotation is not included in this initial version.
+
+Daily times use the Mac's local calendar. A daily job missed during sleep can
+run on wake; power-off can miss a daily run. Interval firings can be skipped
+during sleep or while the job is already running. Neither mode promises
+continuous execution. See Apple's [scheduling guide](https://developer.apple.com/library/archive/documentation/MacOSX/Conceptual/BPSystemStartup/Chapters/ScheduledJobs.html)
+and the installed `launchd.plist(5)`/`launchctl(1)` manuals for platform behavior.
+Development verifies plist export and lifecycle with temporary files and a
+simulated launchctl. A real personal job requires a separately selected utility
+and explicit activation.
+
 ## Development
 
 ```sh
@@ -149,6 +209,7 @@ uv run python scripts/check_distribution.py
 ```
 
 The distribution check creates a temporary environment, installs the built wheel,
-and verifies both commands and module execution from outside the checkout. CI
+and verifies both commands, module execution, and the complete behavior suite
+against the installed wheel from outside the checkout. CI
 runs the tests on Linux, macOS, and Windows and verifies the built distribution.
 Releases and package publication are separate from source development.

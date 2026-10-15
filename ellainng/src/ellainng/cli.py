@@ -1,8 +1,10 @@
 """The permanent command entry points for personal utilities."""
 
 import argparse
+from contextlib import redirect_stderr, redirect_stdout
 from functools import wraps
 import json
+import os
 from pathlib import Path
 
 from expose_interface import CommandError, Context, Interface, option
@@ -11,6 +13,7 @@ from . import __version__
 from .errors import UtilityError
 from .manifest import config_path
 from .runtime import Runtime, validate_arguments
+from .scheduling import Scheduler
 
 
 def json_object(value: str) -> dict:
@@ -46,6 +49,7 @@ learn = app.add_interface(Interface("learn", description="Explicitly trust and r
 defaults = app.add_interface(Interface("defaults", description="Save default arguments."))
 presets = app.add_interface(Interface("preset", description="Save named argument presets."))
 history = app.add_interface(Interface("history", description="Inspect private execution metadata."))
+schedule = app.add_interface(Interface("schedule", description="Define and explicitly manage scheduled jobs."))
 
 
 @app.program
@@ -208,6 +212,87 @@ def list_history(context: Context, limit: int = 20):
 def show_history(context: Context, run_id: str):
     """Show one run's name, UTC time, duration, and outcome."""
     emit(context.obj.history.show(run_id))
+
+
+@schedule.program(name="add")
+@expected
+@option("--arguments", type=json_object, default={})
+def add_schedule(context: Context, name: str, move: str, at: str | None = None,
+                 minutes: int | None = None, arguments: dict | None = None,
+                 preset: str | None = None):
+    """Save a daily HH:MM time or interval in minutes; installation is separate."""
+    Scheduler(context.obj).add(name, move, at=at, minutes=minutes, arguments=arguments, preset=preset)
+    print(name)
+
+
+@schedule.program(name="list")
+@expected
+def list_schedules(context: Context):
+    """List saved definitions without checking or changing launchd."""
+    emit(context.obj.manifest.data["schedules"])
+
+
+@schedule.program(name="show")
+@expected
+def show_schedule(context: Context, name: str):
+    """Show a saved schedule definition."""
+    emit(Scheduler(context.obj).backend.definition(name))
+
+
+@schedule.program(name="run")
+async def run_schedule(context: Context, name: str):
+    """Run a saved schedule now through the same validated runtime."""
+    try:
+        emit(await Scheduler(context.obj).run_async(name))
+    except UtilityError as error:
+        raise CommandError(str(error)) from error
+
+
+@schedule.program(name="execute")
+async def execute_schedule(context: Context, name: str):
+    """Execute for launchd, emitting status without utility output or error contents."""
+    try:
+        with open(os.devnull, "w") as sink, redirect_stdout(sink), redirect_stderr(sink):
+            await Scheduler(context.obj).run_async(name)
+    except Exception as error:
+        emit({"schedule": name, "status": "failed", "error_type": type(error).__name__})
+        raise CommandError("Scheduled utility failed; inspect execution history.") from None
+    emit({"schedule": name, "status": "succeeded"})
+
+
+@schedule.program(name="export")
+@expected
+def export_schedule(context: Context, name: str):
+    """Print a reviewable LaunchAgent plist without installing it."""
+    print(Scheduler(context.obj).backend.export(name).decode(), end="")
+
+
+@schedule.program(name="install")
+@expected
+def install_schedule(context: Context, name: str):
+    """Install and bootstrap this configuration's job in the current macOS GUI session."""
+    emit(Scheduler(context.obj).install(name))
+
+
+@schedule.program(name="status")
+@expected
+def schedule_status(context: Context, name: str):
+    """Report whether a verified plist and loaded macOS job exist."""
+    emit(Scheduler(context.obj).backend.status(name))
+
+
+@schedule.program(name="uninstall")
+@expected
+def uninstall_schedule(context: Context, name: str):
+    """Unload and remove only a verified LaunchAgent; keep its saved definition and logs."""
+    Scheduler(context.obj).backend.uninstall(name)
+
+
+@schedule.program(name="remove")
+@expected
+def remove_schedule(context: Context, name: str):
+    """Remove an uninstalled schedule definition."""
+    Scheduler(context.obj).remove(name)
 
 
 def main(argv=None):
