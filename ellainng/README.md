@@ -18,25 +18,18 @@ uv run ellainng version
 uv run python -m ellainng --help
 ```
 
-Keep the `expose_interface` checkout beside this repository under `Projects/`.
-The development source in `pyproject.toml` points to `../../expose_interface`
-relative to this Python project, so `uv sync --locked` installs it editably.
-
 Install the command into its own environment from the repository root:
 
 ```sh
-uv tool install ./ellainng --with ../expose_interface
+uv tool install ./ellainng
 ```
 
 Both `ella` and `ellainng` invoke the same interface. Importing the package and
 displaying help perform no utility execution or user configuration writes.
 
-Hidden Moves is installed from PyPI. Until expose-interface is published, local
-development and distribution checks use the neighboring source checkout. Wheel
-metadata contains the ordinary `expose-interface==0.1.0` requirement; the uv source
-override supplies the local package without embedding machine paths or private
-GitHub URLs in the built distribution. Hosted CI also needs that source checkout
-or an available package release before it can run.
+Both `hidden-moves==0.1.0` and `expose-interface==0.1.0` are installed from PyPI.
+Development, CI, and built-wheel installation use these published distributions;
+no neighboring source checkout or GitHub authorization is required.
 
 ## Development
 
@@ -48,8 +41,6 @@ uv run python scripts/check_distribution.py
 ```
 
 The distribution check creates a temporary environment, installs the built wheel,
-and the configured local expose_interface source, then verifies both commands
-and module execution from outside the checkout. Pass `--expose-interface PATH`
-to use a different checkout for this check. CI
+and verifies both commands and module execution from outside the checkout. CI
 runs the tests on Linux, macOS, and Windows and verifies the built distribution.
 Releases and package publication are separate from source development.
