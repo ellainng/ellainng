@@ -20,9 +20,6 @@ ella = "ellainng.cli:main"
 Source = "https://github.com/ellainng/ellainng/tree/main/ellainng"
 Issues = "https://github.com/ellainng/ellainng/issues"
 
-[tool.uv.sources]
-expose-interface = { path = "../../expose_interface", editable = true }
-
 [build-system]
 requires = ["uv_build>=0.12.19,<0.13.0"]
 build-backend = "uv_build"
