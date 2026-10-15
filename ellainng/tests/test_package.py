@@ -12,9 +12,10 @@ import unittest
 
 from ellainng import __version__
 from ellainng.cli import app, main
+from support import IsolatedStateTests
 
 
-class PackageTests(unittest.TestCase):
+class PackageTests(IsolatedStateTests):
     def test_aliases_share_one_entry_point(self):
         entries = {entry.name: entry.value for entry in distribution("ellainng").entry_points}
         self.assertEqual(entries["ella"], "ellainng.cli:main")

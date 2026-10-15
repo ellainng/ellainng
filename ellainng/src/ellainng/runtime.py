@@ -2,8 +2,9 @@
 
 import asyncio
 from collections.abc import Callable
+from functools import cached_property
+import importlib
 import inspect
-import json
 import math
 from pathlib import Path
 import subprocess
@@ -14,25 +15,53 @@ from hidden_moves.adapters import CapabilityCatalog
 
 from .errors import UtilityError
 from .utilities.text import slugify
-
-
-def validate_arguments(arguments: dict) -> dict:
-    """Require a finite JSON object before selecting or importing a capability."""
-    if not isinstance(arguments, dict) or not all(isinstance(key, str) for key in arguments):
-        raise UtilityError("Arguments must be a JSON object with string keys.")
-    try:
-        # Round-tripping also detaches the caller's mutable containers.
-        return json.loads(json.dumps(arguments, allow_nan=False))
-    except (ValueError, TypeError, OverflowError) as error:
-        raise UtilityError("Arguments must contain finite JSON values.") from error
+from .values import validate_arguments
 
 
 class Runtime:
     """A fresh personal registry; registration never calls a utility."""
 
-    def __init__(self):
+    def __init__(self, *, config_path: Path | None = None):
         self.moves = Moves()
+        self.config_path = config_path
+        self._loaded = set()
         self.register_python("text.slugify", slugify)
+
+    @cached_property
+    def manifest(self):
+        from .manifest import Manifest
+
+        return Manifest.load(self.config_path)
+
+    def _prepare(self, name: str, *, allow_disabled: bool = False):
+        from .manifest import target_parts
+
+        entry = self.manifest.data["moves"].get(name)
+        if entry is None:
+            return
+        if not allow_disabled and not entry.get("enabled", True):
+            raise UtilityError(f"Utility {name!r} is disabled.")
+        if name in self._loaded:
+            return
+        try:
+            if entry["kind"] == "python":
+                module, attributes = target_parts(entry["target"])
+                function = importlib.import_module(module)
+                for attribute in attributes:
+                    function = getattr(function, attribute)
+                self.register_python(name, function)
+            else:
+                base = self.manifest.path.parent
+                argv = list(entry["argv"])
+                if "/" in argv[0] or "\\" in argv[0]:
+                    argv[0] = str((base / Path(argv[0]).expanduser()).resolve())
+                cwd = (base / Path(entry.get("cwd", ".")).expanduser()).resolve()
+                self.register_executable(name, argv, cwd=cwd, timeout=entry.get("timeout", 60))
+        except UtilityError:
+            raise
+        except Exception as error:
+            raise UtilityError(f"Cannot load utility {name!r}: {error}") from error
+        self._loaded.add(name)
 
     def register_python(self, name: str, function: Callable) -> None:
         namespace, _, leaf = name.rpartition(".")
@@ -71,16 +100,37 @@ class Runtime:
         self.register_python(name, execute)
 
     def names(self) -> list[str]:
-        return sorted(spec.qualified_name for spec in self.moves.moves())
+        return sorted({spec.qualified_name for spec in self.moves.moves()}
+                      | self.manifest.data["moves"].keys())
 
     def describe(self, name: str) -> dict:
+        self._prepare(name, allow_disabled=True)
         try:
-            return self.moves.explain(name)
+            return {**self.moves.explain(name),
+                    "registration": self.manifest.data["moves"].get(name)}
         except MoveError as error:
             raise UtilityError(str(error)) from error
 
-    async def invoke_async(self, name: str, arguments: dict | None = None):
+    def effective_arguments(self, name: str, arguments: dict | None = None,
+                            *, preset: str | None = None) -> dict:
         supplied = validate_arguments({} if arguments is None else arguments)
+        self._prepare(name)
+        definition = self.describe(name)
+        properties = (definition.get("input_schema") or {}).get("properties", {})
+        effective = {key: value["default"] for key, value in properties.items() if "default" in value}
+        entry = self.manifest.data["moves"].get(name, {})
+        effective.update(entry.get("defaults", {}))
+        if preset is not None:
+            presets = entry.get("presets", {})
+            if preset not in presets:
+                raise UtilityError(f"No preset {preset!r} for {name!r}.")
+            effective.update(presets[preset])
+        effective.update(supplied)
+        return validate_arguments(effective)
+
+    async def invoke_async(self, name: str, arguments: dict | None = None,
+                           *, preset: str | None = None):
+        supplied = self.effective_arguments(name, arguments, preset=preset)
         try:
             catalog = CapabilityCatalog(self.moves, [name])
             result = catalog.invoke(name, supplied)
@@ -92,6 +142,6 @@ class Runtime:
         except Exception as error:
             raise UtilityError(f"Utility {name!r} failed ({type(error).__name__}): {error}") from error
 
-    def invoke(self, name: str, arguments: dict | None = None):
+    def invoke(self, name: str, arguments: dict | None = None, *, preset: str | None = None):
         """Invoke from synchronous code; async callers use ``invoke_async``."""
-        return asyncio.run(self.invoke_async(name, arguments))
+        return asyncio.run(self.invoke_async(name, arguments, preset=preset))

@@ -12,9 +12,10 @@ import unittest
 from ellainng.cli import app, main
 from ellainng.errors import UtilityError
 from ellainng.runtime import Runtime
+from support import IsolatedStateTests
 
 
-class RuntimeTests(unittest.TestCase):
+class RuntimeTests(IsolatedStateTests):
     def test_schema_rejects_invalid_inputs_before_execution(self):
         calls = []
 
