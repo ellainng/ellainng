@@ -22,14 +22,18 @@ dependencies = [
 
 [package.metadata]
 requires-dist = [
-    { name = "expose-interface", editable = "../../expose_interface" },
+    { name = "expose-interface", specifier = "==0.1.0" },
     { name = "hidden-moves", specifier = "==0.1.0" },
 ]
 
 [[package]]
 name = "expose-interface"
 version = "0.1.0"
-source = { editable = "../../expose_interface" }
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/5c/59/eea6d779e745ec08aa66fe500b8a538653f42d01036aa1092dfebb01ab9f/expose_interface-0.1.0.tar.gz", hash = "sha256:76c74d5e0fbae7a1c715ec7aaf89403644a67c0bd8a861eb0fe2d38059ef5dda", size = 13361, upload-time = "2026-10-15T16:59:08.467Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/12/e9/935d1d85232a02cad3e7c37ec1597e3771fad25a1cd1bb49cc58f4522414/expose_interface-0.1.0-py3-none-any.whl", hash = "sha256:6ec6736b98e777ea63dcfe4fd99e87e2fade3e27fc659acace919bed8860d689", size = 16917, upload-time = "2026-10-15T16:59:07.209Z" },
+]
 
 [[package]]
 name = "hidden-moves"
