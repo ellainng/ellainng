@@ -29,7 +29,7 @@ displaying help perform no utility execution or user configuration writes.
 
 Hidden Moves is installed from PyPI. Until expose-interface is published, its
 dependency uses a specific reviewed GitHub revision. Installation therefore
-requires Git and access to that public source repository.
+requires Git and authorization to access that source repository while it is private.
 
 ## Development
 
