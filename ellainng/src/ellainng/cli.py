@@ -20,8 +20,8 @@ def json_object(value: str) -> dict:
         raise argparse.ArgumentTypeError(f"Expected a finite JSON object: {error}") from error
 
 
-def setup(context: Context, config: Path | None = None):
-    context.obj = Runtime(config_path=config)
+def setup(context: Context, config: Path | None = None, state_dir: Path | None = None):
+    context.obj = Runtime(config_path=config, state_dir=state_dir)
 
 
 def expected(function):
@@ -45,6 +45,7 @@ config = app.add_interface(Interface("config", description="Manage the persisten
 learn = app.add_interface(Interface("learn", description="Explicitly trust and register utilities."))
 defaults = app.add_interface(Interface("defaults", description="Save default arguments."))
 presets = app.add_interface(Interface("preset", description="Save named argument presets."))
+history = app.add_interface(Interface("history", description="Inspect private execution metadata."))
 
 
 @app.program
@@ -193,6 +194,20 @@ def set_defaults(context: Context, name: str, arguments: dict):
 def set_preset(context: Context, name: str, preset: str, arguments: dict):
     """Create or replace one named preset."""
     context.obj.manifest.update(name, defaults=arguments, preset=preset)
+
+
+@history.program(name="list")
+@expected
+def list_history(context: Context, limit: int = 20):
+    """Show recent runs without argument, output, or exception contents."""
+    emit(context.obj.history.list(limit))
+
+
+@history.program(name="show")
+@expected
+def show_history(context: Context, run_id: str):
+    """Show one run's name, UTC time, duration, and outcome."""
+    emit(context.obj.history.show(run_id))
 
 
 def main(argv=None):
