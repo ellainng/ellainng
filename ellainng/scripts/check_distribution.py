@@ -30,6 +30,8 @@ def main():
                                     capture_output=True, text=True)
             assert "personal utilities" in result.stdout, result.stdout
         subprocess.run([str(python), "-m", "ellainng", "version"], cwd=root, check=True)
+        subprocess.run([str(python), "-m", "unittest", "discover", "-s", str(project / "tests"), "-q"],
+                       cwd=root, check=True)
     print("Installed wheel verified.")
 
 

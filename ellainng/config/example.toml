@@ -14,3 +14,9 @@ cwd = "."
 timeout = 30
 
 [schedules]
+
+[schedules."daily-slug"]
+move = "text.slug"
+at = "02:00"
+preset = "underscore"
+arguments = { value = "Hello World" }
