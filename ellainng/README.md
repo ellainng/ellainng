@@ -31,6 +31,42 @@ Both `hidden-moves==0.1.0` and `expose-interface==0.1.0` are installed from PyPI
 Development, CI, and built-wheel installation use these published distributions;
 no neighboring source checkout or GitHub authorization is required.
 
+## Capabilities
+
+```sh
+uv run ella list
+uv run ella inspect text.slugify
+uv run ella run text.slugify --arguments '{"value":"Café & Hello, World!"}'
+uv run ella text slugify 'Café & Hello, World!'
+```
+
+`run` validates structured arguments using Hidden Moves, awaits async functions,
+and prints a JSON result. Incorrect inputs exit with an error before calling the
+utility. Inspection describes the callable without invoking it.
+
+Ordinary functions and literal executable argument arrays can also be registered
+from Python:
+
+```python
+from ellainng.runtime import Runtime
+
+def repeat(value: str, count: int = 2) -> str:
+    return value * count
+
+runtime = Runtime()
+runtime.register_python("text.repeat", repeat)
+print(runtime.invoke("text.repeat", {"value": "ha", "count": 3}))
+
+runtime.register_executable("git.status", ["git", "status", "--short"], timeout=30)
+result = runtime.invoke("git.status", {"args": ["--branch"]})
+print(result["stdout"])
+```
+
+Each runtime has its own registry. Executables use `shell=False`, append supplied
+`args` literally, inherit the caller's environment, and return stdout/stderr on
+success. A missing program, nonzero exit, or timeout is a command failure. Async
+Python callers can await `runtime.invoke_async(...)`.
+
 ## Development
 
 ```sh
