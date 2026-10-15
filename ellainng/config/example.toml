@@ -1,0 +1,16 @@
+version = 1
+
+[moves."text.slug"]
+kind = "python"
+target = "ellainng.utilities.text:slugify"
+enabled = true
+defaults = { separator = "-" }
+presets = { underscore = { separator = "_" } }
+
+[moves."git.status"]
+kind = "executable"
+argv = ["git", "status", "--short"]
+cwd = "."
+timeout = 30
+
+[schedules]
