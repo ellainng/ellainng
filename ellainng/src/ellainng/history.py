@@ -45,6 +45,8 @@ class History:
                     pass
                 else:
                     os.close(descriptor)
+                if os.name != "nt" and self.path.stat().st_mode & 0o077:
+                    raise UtilityError(f"Execution history database must have private permissions: {self.path}")
                 connection = sqlite3.connect(self.path, timeout=5)
             else:
                 connection = sqlite3.connect(self.path.as_uri() + "?mode=ro", uri=True, timeout=5)

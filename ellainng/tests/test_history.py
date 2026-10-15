@@ -79,6 +79,17 @@ class HistoryTests(IsolatedStateTests):
             runtime.invoke("test.touch")
         self.assertEqual(calls, [])
 
+    def test_existing_nonprivate_database_is_not_written(self):
+        if os.name == "nt":
+            self.skipTest("POSIX permission bits are not Windows access control.")
+        history = History()
+        history.directory.mkdir()
+        history.path.touch(mode=0o644)
+        history.path.chmod(0o644)
+        with self.assertRaisesRegex(UtilityError, "private permissions"):
+            history.start("text.slugify")
+        self.assertEqual(history.path.read_bytes(), b"")
+
     def test_concurrent_runs_have_distinct_complete_records(self):
         def run(index):
             return Runtime().invoke("text.slugify", {"value": str(index)})
