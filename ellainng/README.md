@@ -118,6 +118,27 @@ comments; back up hand-edited comments separately. TOML has no null value: omit
 those saved keys and pass null explicitly at invocation when needed. Credentials
 belong in the caller's environment, outside the manifest.
 
+## Execution history
+
+```sh
+uv run ella history list --limit 10
+uv run ella history show RUN_ID
+```
+
+Each runtime invocation records a unique run ID, capability name, UTC start time,
+elapsed seconds, outcome, and error class. Argument values, environment values,
+output, and exception messages are excluded. Input failures reaching the runtime
+are recorded once; CLI parsing failures are rejected before runtime setup and
+create no record. A process killed before completion can leave a `running` row.
+
+Select storage with the global `--state-dir PATH` option or `ELLAINNG_STATE_DIR`.
+Defaults are `~/Library/Application Support/ellainng/state` on macOS,
+`${XDG_STATE_HOME:-~/.local/state}/ellainng` on Linux, and
+`%LOCALAPPDATA%/ellainng/state` on Windows. The database is created privately on
+the first run. Listing, inspection, help, and empty history reads create no state.
+Storage must be writable before a utility starts. A completion-storage failure
+reports that an operation has already run and never retries the operation.
+
 ## Development
 
 ```sh

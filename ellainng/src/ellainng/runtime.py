@@ -8,12 +8,14 @@ import inspect
 import math
 from pathlib import Path
 import subprocess
+import time
 from typing import Any
 
 from hidden_moves import MoveError, Moves
 from hidden_moves.adapters import CapabilityCatalog
 
 from .errors import UtilityError
+from .history import History
 from .utilities.text import slugify
 from .values import validate_arguments
 
@@ -21,9 +23,10 @@ from .values import validate_arguments
 class Runtime:
     """A fresh personal registry; registration never calls a utility."""
 
-    def __init__(self, *, config_path: Path | None = None):
+    def __init__(self, *, config_path: Path | None = None, state_dir: Path | None = None):
         self.moves = Moves()
         self.config_path = config_path
+        self.history = History(state_dir)
         self._loaded = set()
         self.register_python("text.slugify", slugify)
 
@@ -130,6 +133,27 @@ class Runtime:
 
     async def invoke_async(self, name: str, arguments: dict | None = None,
                            *, preset: str | None = None):
+        run_id = self.history.start(name)
+        started = time.monotonic()
+        try:
+            result = await self._invoke_async(name, arguments, preset=preset)
+        except BaseException as error:
+            status = "cancelled" if isinstance(error, (asyncio.CancelledError, KeyboardInterrupt)) else "failed"
+            try:
+                self.history.finish(run_id, time.monotonic() - started, status=status,
+                                    error_type=type(error).__name__)
+            except UtilityError as storage_error:
+                raise UtilityError(f"Run {run_id} failed and its history could not be updated.") from storage_error
+            raise
+        try:
+            self.history.finish(run_id, time.monotonic() - started, status="succeeded")
+        except UtilityError as error:
+            raise UtilityError(f"Run {run_id} completed, but its history could not be updated; "
+                               "the operation has already run.") from error
+        return result
+
+    async def _invoke_async(self, name: str, arguments: dict | None = None,
+                            *, preset: str | None = None):
         supplied = self.effective_arguments(name, arguments, preset=preset)
         try:
             catalog = CapabilityCatalog(self.moves, [name])
