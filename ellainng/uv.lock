@@ -22,14 +22,14 @@ dependencies = [
 
 [package.metadata]
 requires-dist = [
-    { name = "expose-interface", git = "https://github.com/outside-labs/expose_interface.git?rev=9a728756c02dd528bce5b685e55a89585923ef71" },
+    { name = "expose-interface", editable = "../../expose_interface" },
     { name = "hidden-moves", specifier = "==0.1.0" },
 ]
 
 [[package]]
 name = "expose-interface"
 version = "0.1.0"
-source = { git = "https://github.com/outside-labs/expose_interface.git?rev=9a728756c02dd528bce5b685e55a89585923ef71#9a728756c02dd528bce5b685e55a89585923ef71" }
+source = { editable = "../../expose_interface" }
 
 [[package]]
 name = "hidden-moves"
